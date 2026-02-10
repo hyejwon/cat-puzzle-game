@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>냥냥 버블 퍼즐</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;700&display=swap');
@@ -16,7 +16,7 @@
         body {
             font-family: 'Quicksand', sans-serif;
             background: #1a1a2e;
-            background-image: 
+            background-image:
                 /* 큰 픽셀 체크 패턴 */
                 repeating-conic-gradient(
                     from 0deg at 0% 0%,
@@ -44,10 +44,13 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            min-height: 100dvh;
+            min-height: -webkit-fill-available;
             overflow: hidden;
             position: relative;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
         
         body::before {
@@ -558,7 +561,161 @@
         }
         html, body {
             height: 100%;
+            height: 100dvh;
+            height: -webkit-fill-available;
             overflow: hidden;
+        }
+
+        /* 모바일 반응형 레이아웃 */
+        @media screen and (max-width: 768px) {
+            body {
+                align-items: flex-start;
+                padding: env(safe-area-inset-top) 0 0 0;
+            }
+
+            body::after {
+                display: none;
+            }
+
+            .game-container {
+                flex-direction: column;
+                gap: 0;
+                padding: 4px;
+                border-width: 2px;
+                box-shadow:
+                    0 0 0 2px #16213e,
+                    0 0 0 4px #0f3460,
+                    0 10px 30px rgba(0, 0, 0, 0.5),
+                    inset 0 0 20px rgba(100, 50, 150, 0.1);
+                width: 100vw;
+                max-width: 100vw;
+                max-height: calc(100dvh - env(safe-area-inset-top));
+                max-height: calc(var(--real-vh, 100vh));
+                overflow: hidden;
+            }
+
+            .game-container::before {
+                display: none;
+            }
+
+            .left-panel {
+                width: 100%;
+                max-height: none;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 4px;
+                overflow: visible;
+            }
+
+            .score-board {
+                flex: 1;
+                min-width: 0;
+                padding: 6px 10px;
+                animation: none;
+            }
+
+            .score-board h2 {
+                font-size: 12px;
+                margin-bottom: 2px;
+            }
+
+            .level-indicator {
+                font-size: 11px;
+                margin-bottom: 1px;
+            }
+
+            .score-value {
+                font-size: 20px;
+            }
+
+            .target-score {
+                font-size: 11px;
+                margin-top: 1px;
+            }
+
+            .mission-board {
+                flex: 1;
+                min-width: 0;
+                padding: 6px 10px;
+                animation: none;
+            }
+
+            .mission-board h2 {
+                font-size: 12px;
+                margin-bottom: 2px;
+            }
+
+            .mission-color {
+                font-size: 11px;
+                margin-bottom: 4px;
+            }
+
+            .mission-shape {
+                padding: 4px;
+                margin-top: 4px;
+            }
+
+            .mission-board > div:last-child {
+                display: none;
+            }
+
+            .ranking-board,
+            .controls-info {
+                display: none;
+            }
+
+            .game-board-wrapper {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            #gameCanvas {
+                border-width: 2px;
+                box-shadow:
+                    0 0 0 2px #9D7FEA,
+                    0 0 0 4px #16213e,
+                    0 5px 15px rgba(0, 0, 0, 0.6),
+                    inset 0 0 15px rgba(100, 50, 150, 0.2);
+                display: block;
+                max-width: 100%;
+                max-height: 100%;
+            }
+
+            .mobile-controls {
+                position: fixed;
+                bottom: calc(8px + env(safe-area-inset-bottom));
+            }
+
+            .mobile-controls button {
+                width: 52px;
+                height: 52px;
+                font-size: 20px;
+            }
+
+            .mobile-controls .control-row {
+                gap: 8px;
+                margin-top: 6px;
+            }
+
+            /* 게임오버/레벨클리어 화면 모바일 */
+            .game-over-screen, .level-complete-screen {
+                padding: 24px;
+                width: 85vw;
+                max-width: 340px;
+            }
+
+            .game-over-screen h1, .level-complete-screen h1 {
+                font-size: 32px;
+            }
+
+            .restart-btn, .next-level-btn {
+                padding: 12px 30px;
+                font-size: 18px;
+            }
         }
 
     </style>
@@ -1772,6 +1929,15 @@
             }
         });
 
+        // iOS Safari 스크롤/바운스 방지
+        document.addEventListener('touchmove', function(e) {
+            // 모바일 컨트롤 버튼 위에서는 이미 preventDefault 처리됨
+            // 게임 영역에서 스크롤 방지
+            if (!e.target.closest('input') && !e.target.closest('.game-over-screen') && !e.target.closest('.level-complete-screen')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
         // 게임 초기화 및 시작
         generateSpriteSheets();
         initGrid();
@@ -1793,6 +1959,70 @@
         });
 
         
+        // ✅ 모바일 뷰포트 & 캔버스 리사이즈
+        function updateViewportHeight() {
+            const vh = window.innerHeight;
+            document.documentElement.style.setProperty('--real-vh', vh + 'px');
+        }
+
+        function resizeForMobile() {
+            const isMobile = window.innerWidth <= 768;
+            if (!isMobile) {
+                // 데스크톱: 원래 크기 복원
+                canvas.style.width = '';
+                canvas.style.height = '';
+                return;
+            }
+
+            updateViewportHeight();
+
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+
+            // 상단 정보 패널 높이 + 패딩 + 보더
+            const topPanelHeight = 80;
+            // 하단 모바일 컨트롤 높이 + safe area
+            const safeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sab') || '0') || 34;
+            const bottomControlsHeight = 130 + safeBottom;
+            // 여유 공간
+            const containerPadding = 20;
+
+            const availableW = screenW - containerPadding;
+            const availableH = screenH - topPanelHeight - bottomControlsHeight - containerPadding;
+
+            const canvasRatio = canvas.width / canvas.height; // 600/850
+            let displayW, displayH;
+
+            if (availableW / availableH > canvasRatio) {
+                // 높이 제한
+                displayH = availableH;
+                displayW = displayH * canvasRatio;
+            } else {
+                // 너비 제한
+                displayW = availableW;
+                displayH = displayW / canvasRatio;
+            }
+
+            canvas.style.width = Math.floor(displayW) + 'px';
+            canvas.style.height = Math.floor(displayH) + 'px';
+        }
+
+        window.addEventListener('resize', resizeForMobile);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(resizeForMobile, 100);
+        });
+
+        // Safari 주소창 변화 감지
+        if ('visualViewport' in window) {
+            window.visualViewport.addEventListener('resize', () => {
+                updateViewportHeight();
+                resizeForMobile();
+            });
+        }
+
+        // 초기 실행
+        resizeForMobile();
+
         // ✅ 모바일 터치 컨트롤 (정리본)
         function isTouchDevice() {
             return (
@@ -1906,6 +2136,7 @@
         // ✅ 중요: DOM 생성 후 바인딩
         document.addEventListener('DOMContentLoaded', () => {
             bindMobileControls();
+            resizeForMobile();
         });
     </script>      
     <!-- ✅ 모바일 터치패드 -->
