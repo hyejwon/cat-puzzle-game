@@ -528,12 +528,10 @@
             text-shadow: 0 0 10px rgba(183, 148, 246, 0.4);
         }
         .mobile-controls {
-            position: fixed;
-            left: 50%;
-            bottom: calc(12px + env(safe-area-inset-bottom));
-            transform: translateX(-50%);
-            z-index: 2000;
             display: none; /* 기본 숨김 (모바일에서만 보이게) */
+            flex-shrink: 0;
+            padding: 6px 0;
+            padding-bottom: calc(6px + env(safe-area-inset-bottom));
             pointer-events: auto;
         }
         .mobile-controls .control-row {
@@ -685,20 +683,15 @@
                 max-height: 100%;
             }
 
-            .mobile-controls {
-                position: fixed;
-                bottom: calc(8px + env(safe-area-inset-bottom));
-            }
-
             .mobile-controls button {
-                width: 52px;
-                height: 52px;
-                font-size: 20px;
+                width: 48px;
+                height: 48px;
+                font-size: 18px;
             }
 
             .mobile-controls .control-row {
-                gap: 8px;
-                margin-top: 6px;
+                gap: 10px;
+                margin-top: 4px;
             }
 
             /* 게임오버/레벨클리어 화면 모바일 */
@@ -782,6 +775,18 @@
         
         <div class="game-board-wrapper">
             <canvas id="gameCanvas" width="600" height="850"></canvas>
+        </div>
+
+        <!-- ✅ 모바일 터치패드 (컨테이너 내부) -->
+        <div class="mobile-controls" id="mobileControls">
+            <div class="control-row">
+                <button id="btnLeft" aria-label="왼쪽">←</button>
+                <button id="btnRotate" aria-label="회전">⟳</button>
+                <button id="btnRight" aria-label="오른쪽">→</button>
+            </div>
+            <div class="control-row">
+                <button id="btnDown" aria-label="빠른 낙하">▼</button>
+            </div>
         </div>
     </div>
 
@@ -1968,7 +1973,6 @@
         function resizeForMobile() {
             const isMobile = window.innerWidth <= 768;
             if (!isMobile) {
-                // 데스크톱: 원래 크기 복원
                 canvas.style.width = '';
                 canvas.style.height = '';
                 return;
@@ -1979,13 +1983,12 @@
             const screenW = window.innerWidth;
             const screenH = window.innerHeight;
 
-            // 상단 정보 패널 높이 + 패딩 + 보더
-            const topPanelHeight = 80;
-            // 하단 모바일 컨트롤 높이 + safe area
-            const safeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sab') || '0') || 34;
-            const bottomControlsHeight = 130 + safeBottom;
-            // 여유 공간
-            const containerPadding = 20;
+            // 실제 DOM 요소 높이 측정
+            const leftPanel = document.querySelector('.left-panel');
+            const controls = document.getElementById('mobileControls');
+            const topPanelHeight = leftPanel ? leftPanel.offsetHeight + 8 : 80;
+            const bottomControlsHeight = controls ? controls.offsetHeight + 4 : 0;
+            const containerPadding = 16;
 
             const availableW = screenW - containerPadding;
             const availableH = screenH - topPanelHeight - bottomControlsHeight - containerPadding;
@@ -1994,11 +1997,9 @@
             let displayW, displayH;
 
             if (availableW / availableH > canvasRatio) {
-                // 높이 제한
-                displayH = availableH;
+                displayH = Math.max(100, availableH);
                 displayW = displayH * canvasRatio;
             } else {
-                // 너비 제한
                 displayW = availableW;
                 displayH = displayW / canvasRatio;
             }
@@ -2138,17 +2139,6 @@
             bindMobileControls();
             resizeForMobile();
         });
-    </script>      
-    <!-- ✅ 모바일 터치패드 -->
-<div class="mobile-controls" id="mobileControls">
-    <div class="control-row">
-        <button id="btnLeft" aria-label="왼쪽">←</button>
-        <button id="btnRotate" aria-label="회전">⟳</button>
-        <button id="btnRight" aria-label="오른쪽">→</button>
-    </div>
-    <div class="control-row">
-        <button id="btnDown" aria-label="빠른 낙하">▼</button>
-    </div>
-</div>
+    </script>
 </body>
 </html>
