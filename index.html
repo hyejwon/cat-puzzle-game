@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>냥냥 버블 퍼즐</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: #1a1a2e;
+            background-image: 
+                /* 큰 픽셀 체크 패턴 */
+                repeating-conic-gradient(
+                    from 0deg at 0% 0%,
+                    #16213e 0deg 90deg,
+                    #1a1a2e 90deg 180deg
+                ),
+                /* 작은 도트 패턴 */
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    transparent 15px,
+                    rgba(100, 50, 150, 0.1) 15px,
+                    rgba(100, 50, 150, 0.1) 16px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    transparent 15px,
+                    rgba(100, 50, 150, 0.1) 15px,
+                    rgba(100, 50, 150, 0.1) 16px
+                );
+            background-size: 32px 32px, 16px 16px, 16px 16px;
+            background-attachment: fixed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                /* 랜덤 별 픽셀 효과 */
+                radial-gradient(circle at 10% 20%, rgba(183, 148, 246, 0.3) 0%, transparent 2px),
+                radial-gradient(circle at 80% 30%, rgba(183, 148, 246, 0.2) 0%, transparent 2px),
+                radial-gradient(circle at 30% 70%, rgba(183, 148, 246, 0.25) 0%, transparent 2px),
+                radial-gradient(circle at 70% 80%, rgba(183, 148, 246, 0.2) 0%, transparent 2px),
+                radial-gradient(circle at 50% 50%, rgba(183, 148, 246, 0.15) 0%, transparent 2px),
+                radial-gradient(circle at 20% 60%, rgba(183, 148, 246, 0.2) 0%, transparent 2px),
+                radial-gradient(circle at 90% 70%, rgba(183, 148, 246, 0.25) 0%, transparent 2px);
+            background-size: 200px 200px;
+            pointer-events: none;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    #0f3460 0px,
+                    #0f3460 8px,
+                    #16213e 8px,
+                    #16213e 16px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    transparent 8px,
+                    rgba(100, 50, 150, 0.2) 8px,
+                    rgba(100, 50, 150, 0.2) 16px
+                );
+            background-size: 16px 16px;
+            pointer-events: none;
+            image-rendering: pixelated;
+            opacity: 0.5;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(30, 30, 50, 0.9);
+            border-radius: 0;
+            box-shadow: 
+                0 0 0 4px #16213e,
+                0 0 0 8px #0f3460,
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                inset 0 0 40px rgba(100, 50, 150, 0.1);
+            backdrop-filter: blur(10px);
+            border: 4px solid #B794F6;
+            image-rendering: pixelated;
+            position: relative;
+        }
+        
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    transparent 4px,
+                    rgba(183, 148, 246, 0.3) 4px,
+                    rgba(183, 148, 246, 0.3) 8px
+                );
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px;
+            max-height: 850px;
+            overflow-y: auto;
+        }
+        
+        .left-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .left-panel::-webkit-scrollbar-track {
+            background: rgba(30, 30, 50, 0.5);
+            border-radius: 0;
+        }
+        
+        .left-panel::-webkit-scrollbar-thumb {
+            background: #9D7FEA;
+            border-radius: 0;
+            border: 2px solid #B794F6;
+        }
+
+        .score-board, .mission-board, .controls-info, .ranking-board {
+            background: rgba(50, 50, 80, 0.9);
+            border-radius: 0;
+            padding: 20px;
+            box-shadow: 
+                0 0 0 2px #9D7FEA,
+                0 0 0 4px #16213e,
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 0 20px rgba(100, 50, 150, 0.1);
+            animation: float 3s ease-in-out infinite;
+            border: 2px solid #B794F6;
+            backdrop-filter: blur(10px);
+            image-rendering: pixelated;
+            position: relative;
+        }
+        
+        .score-board::before, .mission-board::before, .controls-info::before, .ranking-board::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    transparent 8px,
+                    rgba(183, 148, 246, 0.2) 8px,
+                    rgba(183, 148, 246, 0.2) 12px
+                );
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .ranking-board {
+            animation-delay: 0.3s;
+        }
+
+        .ranking-board h2 {
+            font-family: 'Fredoka', sans-serif;
+            color: #B794F6;
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(183, 148, 246, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(60, 60, 90, 0.7);
+            border-radius: 0;
+            font-size: 14px;
+            border: 2px solid rgba(100, 50, 150, 0.5);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .ranking-item.highlight {
+            background: rgba(255, 215, 0, 0.3);
+            animation: rankingPulse 1s ease-in-out infinite;
+            font-weight: bold;
+            border: 2px solid rgba(255, 215, 0, 0.8);
+            box-shadow: 
+                0 0 10px rgba(255, 215, 0, 0.5),
+                inset 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+
+        @keyframes rankingPulse {
+            0%, 100% { 
+                transform: scale(1); 
+                box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            }
+            50% { 
+                transform: scale(1.02); 
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .rank {
+            color: #B794F6;
+            font-weight: bold;
+            min-width: 35px;
+        }
+
+        .rank-name {
+            color: #E0D4F7;
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .rank-score {
+            color: #9D7FEA;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .ranking-item:first-child .rank {
+            color: #FFD700;
+            font-size: 16px;
+        }
+
+        .ranking-item:nth-child(2) .rank {
+            color: #C0C0C0;
+        }
+
+        .ranking-item:nth-child(3) .rank {
+            color: #CD7F32;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .score-board h2, .mission-board h2 {
+            font-family: 'Fredoka', sans-serif;
+            color: #FF69B4;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+            text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.5);
+        }
+
+        .score-value {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 36px;
+            color: #9D7FEA;
+            text-align: center;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(157, 127, 234, 0.6);
+        }
+
+        .target-score {
+            font-size: 18px;
+            color: #B794F6;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .mission-shape {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .mission-color {
+            font-size: 16px;
+            color: #C5B8E0;
+            margin-bottom: 10px;
+        }
+
+        .mission-shape {
+            background: rgba(60, 60, 90, 0.7);
+            border-radius: 0;
+            padding: 15px;
+            text-align: center;
+            margin-top: 10px;
+            border: 2px solid rgba(100, 50, 150, 0.5);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls-info {
+            background: linear-gradient(135deg, rgba(50, 50, 80, 0.8) 0%, rgba(40, 40, 70, 0.9) 100%);
+            font-size: 14px;
+            color: #C5B8E0;
+            line-height: 1.8;
+        }
+
+        .controls-info h3 {
+            font-family: 'Fredoka', sans-serif;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .game-board-wrapper {
+            position: relative;
+        }
+
+        #gameCanvas {
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(30, 30, 50, 0.5) 0px,
+                    rgba(30, 30, 50, 0.5) 8px,
+                    rgba(40, 40, 60, 0.5) 8px,
+                    rgba(40, 40, 60, 0.5) 16px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    rgba(30, 30, 50, 0.5) 0px,
+                    rgba(30, 30, 50, 0.5) 8px,
+                    rgba(40, 40, 60, 0.5) 8px,
+                    rgba(40, 40, 60, 0.5) 16px
+                ),
+                linear-gradient(180deg, #2a2a4a 0%, #1e1e3a 50%, #1a1a2e 100%);
+            border-radius: 0;
+            box-shadow: 
+                0 0 0 4px #9D7FEA,
+                0 0 0 8px #16213e,
+                0 10px 30px rgba(0, 0, 0, 0.6),
+                inset 0 0 30px rgba(100, 50, 150, 0.2);
+            cursor: pointer;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            border: 4px solid #B794F6;
+        }
+
+        .game-over-screen, .level-complete-screen {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(30, 30, 50, 0.98);
+            padding: 40px;
+            border-radius: 0;
+            text-align: center;
+            box-shadow: 
+                0 0 0 4px #9D7FEA,
+                0 0 0 8px #16213e,
+                0 20px 60px rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 4px solid #B794F6;
+            backdrop-filter: blur(10px);
+            image-rendering: pixelated;
+        }
+
+        .game-over-screen.show, .level-complete-screen.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .game-over-screen h1, .level-complete-screen h1 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 48px;
+            color: #B794F6;
+            margin-bottom: 20px;
+            animation: pixelBounce 0.5s ease-in-out infinite;
+            text-shadow: 
+                4px 4px 0 rgba(0, 0, 0, 0.5),
+                0 0 30px rgba(183, 148, 246, 0.6);
+        }
+
+        @keyframes pixelBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .game-over-screen p, .level-complete-screen p {
+            color: #E0D4F7;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .restart-btn {
+            font-family: 'Fredoka', sans-serif;
+            background: #9D7FEA;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 24px;
+            border-radius: 0;
+            cursor: pointer;
+            box-shadow: 
+                0 4px 0 #7C5AC2,
+                0 8px 15px rgba(0, 0, 0, 0.4);
+            transition: all 0.1s ease;
+            border: 3px solid #B794F6;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+            position: relative;
+            image-rendering: pixelated;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(2px);
+            box-shadow: 
+                0 2px 0 #7C5AC2,
+                0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .restart-btn:active {
+            transform: translateY(4px);
+            box-shadow: 
+                0 0 0 #7C5AC2,
+                0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        .next-level-btn {
+            font-family: 'Fredoka', sans-serif;
+            background: #6C63FF;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 24px;
+            border-radius: 0;
+            cursor: pointer;
+            box-shadow: 
+                0 4px 0 #5A52D5,
+                0 8px 15px rgba(0, 0, 0, 0.4);
+            transition: all 0.1s ease;
+            margin-top: 10px;
+            border: 3px solid #8882FF;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+            image-rendering: pixelated;
+        }
+
+        .next-level-btn:hover {
+            transform: translateY(2px);
+            box-shadow: 
+                0 2px 0 #5A52D5,
+                0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .next-level-btn:active {
+            transform: translateY(4px);
+            box-shadow: 
+                0 0 0 #5A52D5,
+                0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 20, 0.85);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        .level-indicator {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 20px;
+            color: #B794F6;
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(183, 148, 246, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="left-panel">
+            <div class="score-board">
+                <div class="level-indicator">LEVEL <span id="levelDisplay">1</span></div>
+                <h2>점수</h2>
+                <div class="score-value" id="scoreDisplay">0</div>
+                <div class="target-score">목표: <span id="targetDisplay">1000</span></div>
+            </div>
+            
+            <div class="ranking-board">
+                <h2>랭킹</h2>
+                <div class="ranking-list" id="rankingList">
+                    <div class="ranking-item">
+                        <span class="rank">1위</span>
+                        <span class="rank-name">---</span>
+                        <span class="rank-score">0</span>
+                    </div>
+                    <div class="ranking-item">
+                        <span class="rank">2위</span>
+                        <span class="rank-name">---</span>
+                        <span class="rank-score">0</span>
+                    </div>
+                    <div class="ranking-item">
+                        <span class="rank">3위</span>
+                        <span class="rank-name">---</span>
+                        <span class="rank-score">0</span>
+                    </div>
+                    <div class="ranking-item">
+                        <span class="rank">4위</span>
+                        <span class="rank-name">---</span>
+                        <span class="rank-score">0</span>
+                    </div>
+                    <div class="ranking-item">
+                        <span class="rank">5위</span>
+                        <span class="rank-name">---</span>
+                        <span class="rank-score">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mission-board">
+                <h2>미션</h2>
+                <div class="mission-color" id="missionColor">빨강 고양이</div>
+                <div class="mission-shape">
+                    <canvas id="missionCanvas" width="100" height="100"></canvas>
+                </div>
+                <div style="margin-top: 10px; font-size: 14px; color: #C5B8E0;">
+                    이 모양을 만들면<br>해당 색 모두 폭발!
+                </div>
+            </div>
+            
+            <div class="controls-info">
+                <h3>조작법</h3>
+                <div>← → : 좌우 이동</div>
+                <div>↑ or Space : 회전</div>
+                <div>↓ : 빠른 낙하</div>
+            </div>
+        </div>
+        
+        <div class="game-board-wrapper">
+            <canvas id="gameCanvas" width="600" height="850"></canvas>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    
+    <div class="game-over-screen" id="gameOverScreen">
+        <h1>게임 오버!</h1>
+        <p style="font-size: 24px; margin-bottom: 20px;">최종 점수: <span id="finalScore">0</span></p>
+        <div id="nameInputSection" style="margin-bottom: 20px; display: none;">
+            <p style="font-size: 18px; margin-bottom: 10px;">랭킹 등록!</p>
+            <input type="text" id="playerNameInput" maxlength="10" placeholder="이름 입력 (최대 10자)" 
+                   style="padding: 10px 15px; font-size: 16px; border-radius: 0; border: 3px solid #9D7FEA; 
+                          width: 200px; text-align: center; font-family: 'Fredoka', sans-serif;
+                          background: rgba(40, 40, 70, 0.9); color: #E0D4F7;
+                          box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);">
+            <button class="next-level-btn" onclick="saveRanking()" style="margin-top: 10px; padding: 10px 30px; font-size: 18px;">등록</button>
+        </div>
+        <button class="restart-btn" onclick="restartGame()">다시 시작</button>
+    </div>
+
+    <div class="level-complete-screen" id="levelCompleteScreen">
+        <h1>레벨 클리어!</h1>
+        <p style="font-size: 24px; margin-bottom: 20px;">점수: <span id="levelScore">0</span></p>
+        <button class="next-level-btn" onclick="nextLevel()">다음 레벨</button>
+        <button class="restart-btn" onclick="restartGame()">처음부터</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false; // 픽셀 아트 선명하게
+        
+        const missionCanvas = document.getElementById('missionCanvas');
+        const missionCtx = missionCanvas.getContext('2d');
+        missionCtx.imageSmoothingEnabled = false;
+
+        // 게임 상수
+        const COLS = 11;
+        const ROWS = 18;
+        const CELL_SIZE = 45;
+        const COLORS = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF', '#C3B1E1', '#FFB6D9'];
+        const COLOR_NAMES = ['빨강', '파랑', '노랑', '초록', '보라', '분홍'];
+        
+        // 일반 그리드 (단순화)
+        const OFFSET_X = 50;
+        const OFFSET_Y = 30;
+
+        // 스프라이트 시스템
+        const SPRITE_SIZE = 128;
+        const CAT_FRAMES = 4;
+        const EXPLOSION_FRAMES = 6;
+        
+        let catSpriteSheet = null;
+        let explosionSpriteSheet = null;
+        let spritesLoaded = false;
+        let animationFrame = 0;
+        let animationTimer = 0;
+        
+        // 스프라이트 시트 생성 (임베디드)
+        function generateSpriteSheets() {
+            // 고양이 스프라이트 시트
+            const catCanvas = document.createElement('canvas');
+            catCanvas.width = SPRITE_SIZE * CAT_FRAMES;
+            catCanvas.height = SPRITE_SIZE * COLORS.length;
+            const catCtx = catCanvas.getContext('2d');
+            
+            COLORS.forEach((color, colorIndex) => {
+                for (let frame = 0; frame < CAT_FRAMES; frame++) {
+                    const x = frame * SPRITE_SIZE;
+                    const y = colorIndex * SPRITE_SIZE;
+                    drawCatSprite(catCtx, x, y, SPRITE_SIZE, color, frame);
+                }
+            });
+            
+            catSpriteSheet = catCanvas;
+            
+            // 폭발 스프라이트 시트
+            const expCanvas = document.createElement('canvas');
+            expCanvas.width = SPRITE_SIZE * EXPLOSION_FRAMES;
+            expCanvas.height = SPRITE_SIZE * COLORS.length;
+            const expCtx = expCanvas.getContext('2d');
+            
+            COLORS.forEach((color, colorIndex) => {
+                for (let frame = 0; frame < EXPLOSION_FRAMES; frame++) {
+                    const x = frame * SPRITE_SIZE;
+                    const y = colorIndex * SPRITE_SIZE;
+                    drawExplosionSprite(expCtx, x, y, SPRITE_SIZE, color, frame);
+                }
+            });
+            
+            explosionSpriteSheet = expCanvas;
+            spritesLoaded = true;
+        }
+
+        // 게임 상태
+        let grid = [];
+        let currentPiece = null;
+        let score = 0;
+        let level = 1;
+        let targetScore = 1000;
+        let gameOver = false;
+        let dropSpeed = 500;
+        let lastDropTime = 0;
+        let fastDrop = false;
+        
+        // 폭발 이펙트 관리
+        let explosions = [];
+        
+        // 착지 애니메이션
+        let landingBlocks = [];
+        
+        // 미션 시스템
+        let missionShape = [];
+        let missionColor = 0;
+
+        // 랭킹 시스템
+        let rankings = [];
+
+        // 랭킹 로드
+        function loadRankings() {
+            const saved = localStorage.getItem('catPuzzleRankings');
+            if (saved) {
+                rankings = JSON.parse(saved);
+            } else {
+                rankings = [];
+            }
+            updateRankingDisplay();
+        }
+
+        // 랭킹 저장
+        function saveRankings() {
+            localStorage.setItem('catPuzzleRankings', JSON.stringify(rankings));
+        }
+
+        // 랭킹 표시 업데이트
+        function updateRankingDisplay() {
+            const rankingList = document.getElementById('rankingList');
+            rankingList.innerHTML = '';
+            
+            // 상위 5개만 표시
+            const topRankings = rankings.slice(0, 5);
+            
+            for (let i = 0; i < 5; i++) {
+                const item = document.createElement('div');
+                item.className = 'ranking-item';
+                
+                if (topRankings[i]) {
+                    item.innerHTML = `
+                        <span class="rank">${i + 1}위</span>
+                        <span class="rank-name">${topRankings[i].name}</span>
+                        <span class="rank-score">${topRankings[i].score}</span>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <span class="rank">${i + 1}위</span>
+                        <span class="rank-name">---</span>
+                        <span class="rank-score">0</span>
+                    `;
+                }
+                
+                rankingList.appendChild(item);
+            }
+        }
+
+        // 랭킹 등록 가능 확인
+        function canEnterRanking(score) {
+            if (rankings.length < 5) return true;
+            return score > rankings[rankings.length - 1].score;
+        }
+
+        // 랭킹 저장
+        function saveRanking() {
+            const nameInput = document.getElementById('playerNameInput');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('이름을 입력해주세요!');
+                return;
+            }
+            
+            // 랭킹 추가
+            rankings.push({
+                name: name,
+                score: score,
+                date: new Date().toISOString()
+            });
+            
+            // 점수 순으로 정렬
+            rankings.sort((a, b) => b.score - a.score);
+            
+            // 상위 10개만 유지
+            rankings = rankings.slice(0, 10);
+            
+            // 저장
+            saveRankings();
+            updateRankingDisplay();
+            
+            // 입력 섹션 숨기기
+            document.getElementById('nameInputSection').style.display = 'none';
+            
+            // 새 기록 하이라이트
+            highlightNewRank(name, score);
+        }
+
+        // 새 기록 하이라이트
+        function highlightNewRank(name, rankScore) {
+            const items = document.querySelectorAll('.ranking-item');
+            items.forEach(item => {
+                const itemName = item.querySelector('.rank-name').textContent;
+                const itemScore = parseInt(item.querySelector('.rank-score').textContent);
+                
+                if (itemName === name && itemScore === rankScore) {
+                    item.classList.add('highlight');
+                    setTimeout(() => {
+                        item.classList.remove('highlight');
+                    }, 3000);
+                }
+            });
+        }
+
+        // 미션 패턴 정의 (상대 좌표)
+        const MISSION_PATTERNS = [
+            // L자 모양
+            [[0, 0], [0, 1], [0, 2], [1, 2]],
+            // T자 모양
+            [[0, 0], [1, 0], [2, 0], [1, 1]],
+            // ㄱ자 모양
+            [[0, 0], [1, 0], [1, 1], [1, 2]],
+            // 정사각형
+            [[0, 0], [1, 0], [0, 1], [1, 1]],
+            // 지그재그
+            [[0, 0], [1, 0], [1, 1], [2, 1]],
+            // 일직선
+            [[0, 0], [0, 1], [0, 2], [0, 3]]
+        ];
+
+        // 그리드 초기화
+        function initGrid() {
+            grid = [];
+            for (let row = 0; row < ROWS; row++) {
+                grid[row] = [];
+                for (let col = 0; col < COLS; col++) {
+                    grid[row][col] = -1; // -1은 빈 칸
+                }
+            }
+        }
+
+        // 미션 생성
+        function generateMission() {
+            missionShape = MISSION_PATTERNS[Math.floor(Math.random() * MISSION_PATTERNS.length)];
+            missionColor = Math.floor(Math.random() * COLORS.length);
+            
+            console.log('New mission:', COLOR_NAMES[missionColor], 'pattern:', missionShape);
+            
+            document.getElementById('missionColor').textContent = COLOR_NAMES[missionColor] + ' 고양이';
+            drawMissionShape();
+        }
+
+        // 미션 모양 그리기
+        function drawMissionShape() {
+            missionCtx.clearRect(0, 0, missionCanvas.width, missionCanvas.height);
+            const scale = 15;
+            const offsetX = 30;
+            const offsetY = 30;
+            
+            missionShape.forEach(([col, row]) => {
+                drawCat(missionCtx, offsetX + col * scale, offsetY + row * scale, scale, COLORS[missionColor]);
+            });
+        }
+
+        // 픽셀 아트 고양이 스프라이트 (마리오 스타일)
+        function drawCatSprite(context, x, y, size, color, frame) {
+            const centerX = x + size / 2;
+            const centerY = y + size / 2;
+            const pixelSize = size / 16; // 16x16 픽셀 그리드
+            
+            context.save();
+            context.translate(centerX - size / 2, centerY - size / 2);
+            
+            // 픽셀 아트 비율로 그리기
+            const drawPixel = (px, py, col) => {
+                context.fillStyle = col;
+                context.fillRect(px * pixelSize, py * pixelSize, pixelSize, pixelSize);
+            };
+            
+            // 색상 팔레트
+            const baseColor = color;
+            const darkColor = darkenColor(color, 30);
+            const lightColor = lightenColor(color, 20);
+            const white = '#FFFFFF';
+            const black = '#000000';
+            const pink = '#FFB6D9';
+            const darkPink = '#FF69B4';
+            
+            // 눈 깜빡임 프레임
+            const eyeOpen = frame !== 1;
+            const bounce = frame === 2 ? -1 : frame === 3 ? 1 : 0;
+            
+            // 바운스 오프셋
+            const yOffset = bounce;
+            
+            // 16x16 픽셀 고양이 머리 (심플 디자인)
+            const pixels = [
+                // Row 0-1: 귀
+                [0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0],
+                [0,0,0,0,1,1,2,1,1,2,1,1,0,0,0,0],
+                
+                // Row 2-3: 머리 상단
+                [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+                [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+                
+                // Row 4-5: 눈 영역 (단순 점)
+                [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+                [0,1,1,1,4,4,1,1,1,1,4,4,1,1,1,0],
+                
+                // Row 6-7: 눈 아래
+                [0,1,1,1,eyeOpen?4:1,eyeOpen?4:1,1,1,1,1,eyeOpen?4:1,eyeOpen?4:1,1,1,1,0],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                
+                // Row 8-9: 코/입
+                [1,1,1,1,1,1,1,5,5,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,5,6,6,5,1,1,1,1,1,1],
+                
+                // Row 10-11: 입
+                [1,1,1,1,1,4,1,5,5,1,4,1,1,1,1,1],
+                [0,1,1,1,1,1,4,4,4,4,1,1,1,1,1,0],
+                
+                // Row 12-13: 턱
+                [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+                [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+                
+                // Row 14-15: 하단
+                [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+                [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0]
+            ];
+            
+            // 색상 매핑 (흰색 제거)
+            const colorMap = {
+                0: null, // 투명
+                1: baseColor, // 기본색
+                2: lightColor, // 귀 안쪽
+                4: black, // 검정 (눈동자, 입)
+                5: darkPink, // 코
+                6: pink // 코 하이라이트
+            };
+            
+            // 픽셀 그리기
+            for (let row = 0; row < 16; row++) {
+                for (let col = 0; col < 16; col++) {
+                    const colorIndex = pixels[row][col];
+                    const pixelColor = colorMap[colorIndex];
+                    
+                    if (pixelColor) {
+                        drawPixel(col, row + yOffset, pixelColor);
+                    }
+                }
+            }
+            
+            context.restore();
+        }
+
+        // 색상 밝게
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace("#",""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, (num >> 16) + amt);
+            const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+            const B = Math.min(255, (num & 0x0000FF) + amt);
+            return "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        // 색상 어둡게
+        function darkenColor(color, percent) {
+            const num = parseInt(color.replace("#",""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.max(0, (num >> 16) - amt);
+            const G = Math.max(0, (num >> 8 & 0x00FF) - amt);
+            const B = Math.max(0, (num & 0x0000FF) - amt);
+            return "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        // 픽셀 아트 폭발 이펙트 (마리오 스타일)
+        function drawExplosionSprite(context, x, y, size, color, frame) {
+            const centerX = x + size / 2;
+            const centerY = y + size / 2;
+            const pixelSize = size / 16;
+            
+            context.save();
+            context.translate(centerX - size / 2, centerY - size / 2);
+            
+            const drawPixel = (px, py, col, alpha = 1) => {
+                context.globalAlpha = alpha;
+                context.fillStyle = col;
+                context.fillRect(px * pixelSize, py * pixelSize, pixelSize, pixelSize);
+                context.globalAlpha = 1;
+            };
+            
+            const lightColor = lightenColor(color, 40);
+            const white = '#FFFFFF';
+            const yellow = '#FFE66D';
+            
+            // 프레임별 폭발 패턴
+            if (frame === 0) {
+                // 중심 플래시
+                const pattern = [
+                    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+                    [0,0,0,0,0,1,1,2,2,1,1,0,0,0,0,0],
+                    [0,0,0,0,1,1,2,2,2,2,1,1,0,0,0,0],
+                    [0,0,0,1,1,2,2,3,3,2,2,1,1,0,0,0],
+                    [0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0],
+                    [0,1,1,2,2,3,3,3,3,3,3,2,2,1,1,0],
+                    [1,1,2,2,3,3,3,3,3,3,3,3,2,2,1,1],
+                    [1,2,2,3,3,3,3,3,3,3,3,3,3,2,2,1],
+                    [1,2,2,3,3,3,3,3,3,3,3,3,3,2,2,1],
+                    [1,1,2,2,3,3,3,3,3,3,3,3,2,2,1,1],
+                    [0,1,1,2,2,3,3,3,3,3,3,2,2,1,1,0],
+                    [0,0,1,1,2,2,3,3,3,3,2,2,1,1,0,0],
+                    [0,0,0,1,1,2,2,3,3,2,2,1,1,0,0,0],
+                    [0,0,0,0,1,1,2,2,2,2,1,1,0,0,0,0],
+                    [0,0,0,0,0,1,1,2,2,1,1,0,0,0,0,0],
+                    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0]
+                ];
+                
+                const colorMap = {1: color, 2: lightColor, 3: white};
+                pattern.forEach((row, r) => {
+                    row.forEach((val, c) => {
+                        if (val > 0) drawPixel(c, r, colorMap[val]);
+                    });
+                });
+            }
+            else if (frame === 1) {
+                // 확산 시작
+                const particles = [
+                    {x:7, y:3}, {x:8, y:3}, {x:3, y:7}, {x:3, y:8},
+                    {x:12, y:7}, {x:12, y:8}, {x:7, y:12}, {x:8, y:12},
+                    {x:5, y:5}, {x:10, y:5}, {x:5, y:10}, {x:10, y:10}
+                ];
+                
+                particles.forEach(p => {
+                    drawPixel(p.x, p.y, white);
+                    drawPixel(p.x, p.y+1, lightColor);
+                    drawPixel(p.x+1, p.y, lightColor);
+                });
+                
+                // 중심
+                drawPixel(7, 7, yellow);
+                drawPixel(8, 7, yellow);
+                drawPixel(7, 8, yellow);
+                drawPixel(8, 8, yellow);
+            }
+            else if (frame === 2) {
+                // 확산 중
+                const particles = [
+                    {x:7, y:1}, {x:8, y:1}, {x:1, y:7}, {x:1, y:8},
+                    {x:14, y:7}, {x:14, y:8}, {x:7, y:14}, {x:8, y:14},
+                    {x:3, y:3}, {x:12, y:3}, {x:3, y:12}, {x:12, y:12},
+                    {x:7, y:4}, {x:8, y:4}, {x:4, y:7}, {x:4, y:8},
+                    {x:11, y:7}, {x:11, y:8}, {x:7, y:11}, {x:8, y:11}
+                ];
+                
+                particles.forEach(p => {
+                    drawPixel(p.x, p.y, lightColor, 0.9);
+                });
+                
+                // 별 모양
+                drawPixel(7, 7, white, 0.8);
+                drawPixel(8, 7, white, 0.8);
+                drawPixel(7, 8, white, 0.8);
+                drawPixel(8, 8, white, 0.8);
+            }
+            else if (frame === 3) {
+                // 확산 끝
+                const particles = [
+                    {x:7, y:0}, {x:8, y:0}, {x:0, y:7}, {x:0, y:8},
+                    {x:15, y:7}, {x:15, y:8}, {x:7, y:15}, {x:8, y:15},
+                    {x:2, y:2}, {x:13, y:2}, {x:2, y:13}, {x:13, y:13},
+                    {x:5, y:1}, {x:10, y:1}, {x:1, y:5}, {x:1, y:10},
+                    {x:14, y:5}, {x:14, y:10}, {x:5, y:14}, {x:10, y:14}
+                ];
+                
+                particles.forEach(p => {
+                    drawPixel(p.x, p.y, color, 0.7);
+                });
+            }
+            else if (frame === 4) {
+                // 페이드 아웃
+                const particles = [
+                    {x:1, y:1}, {x:14, y:1}, {x:1, y:14}, {x:14, y:14},
+                    {x:7, y:0}, {x:8, y:0}, {x:0, y:7}, {x:0, y:8},
+                    {x:15, y:7}, {x:15, y:8}, {x:7, y:15}, {x:8, y:15}
+                ];
+                
+                particles.forEach(p => {
+                    drawPixel(p.x, p.y, lightColor, 0.4);
+                });
+            }
+            else if (frame === 5) {
+                // 거의 사라짐
+                drawPixel(0, 7, color, 0.2);
+                drawPixel(15, 7, color, 0.2);
+                drawPixel(7, 0, color, 0.2);
+                drawPixel(7, 15, color, 0.2);
+            }
+            
+            context.restore();
+        }
+
+        function drawStar(context, cx, cy, spikes, outerRadius, innerRadius) {
+            // 픽셀 아트에서는 사용 안함
+        }
+
+        // 스프라이트 시트에서 고양이 그리기
+        function drawCat(context, x, y, size, color) {
+            if (!spritesLoaded) return;
+            
+            const colorIndex = COLORS.indexOf(color);
+            const frame = Math.floor(animationFrame / 15) % CAT_FRAMES;
+            
+            const sx = frame * SPRITE_SIZE;
+            const sy = colorIndex * SPRITE_SIZE;
+            
+            context.drawImage(
+                catSpriteSheet,
+                sx, sy, SPRITE_SIZE, SPRITE_SIZE,
+                x - size / 2, y - size / 2, size, size
+            );
+        }
+
+        // 그리드 좌표를 픽셀 좌표로 변환
+        function hexToPixel(col, row) {
+            const x = OFFSET_X + col * CELL_SIZE;
+            const y = OFFSET_Y + row * CELL_SIZE;
+            return { x, y };
+        }
+
+        // 떨어지는 피스 생성 (삼각형 모양 3개)
+        function createPiece() {
+            const colors = [
+                Math.floor(Math.random() * COLORS.length),
+                Math.floor(Math.random() * COLORS.length),
+                Math.floor(Math.random() * COLORS.length)
+            ];
+            
+            return {
+                blocks: [
+                    { col: 5, row: -2, color: colors[0] },  // 상단
+                    { col: 4, row: -1, color: colors[1] },  // 좌하단
+                    { col: 6, row: -1, color: colors[2] }   // 우하단
+                ],
+                rotation: 0
+            };
+        }
+
+        // 피스 회전 (시계방향으로 색깔만 회전)
+        function rotatePiece() {
+            if (!currentPiece) return;
+            
+            const colors = currentPiece.blocks.map(b => b.color);
+            // 시계방향 회전: [0, 1, 2] -> [2, 0, 1]
+            currentPiece.blocks[0].color = colors[2];
+            currentPiece.blocks[1].color = colors[0];
+            currentPiece.blocks[2].color = colors[1];
+            
+            // 회전 애니메이션 제거
+        }
+
+        // 피스 이동
+        function movePiece(direction) {
+            if (!currentPiece) return;
+            
+            const newBlocks = currentPiece.blocks.map(b => ({
+                ...b,
+                col: b.col + direction
+            }));
+            
+            // 충돌 검사
+            if (canPlace(newBlocks)) {
+                currentPiece.blocks = newBlocks;
+            }
+        }
+
+        // 배치 가능 여부 확인
+        function canPlace(blocks) {
+            for (let block of blocks) {
+                // 좌우 경계 체크
+                if (block.col < 0 || block.col >= COLS) return false;
+                
+                // 하단 경계 체크 (ROWS는 15이고, 인덱스는 0-14이므로)
+                if (block.row >= ROWS) return false;
+                
+                // 화면 위쪽(음수 row)은 허용
+                // 화면 안쪽에서는 충돌 체크
+                if (block.row >= 0 && block.row < ROWS && grid[block.row][block.col] !== -1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // 피스 낙하
+        function dropPiece() {
+            if (!currentPiece) return;
+            
+            const newBlocks = currentPiece.blocks.map(b => ({
+                ...b,
+                row: b.row + 1
+            }));
+            
+            if (canPlace(newBlocks)) {
+                currentPiece.blocks = newBlocks;
+                return true;
+            } else {
+                // 착지
+                placePiece();
+                return false;
+            }
+        }
+
+        // 피스 배치
+        function placePiece() {
+            let placed = false;
+            currentPiece.blocks.forEach(block => {
+                if (block.row >= 0 && block.row < ROWS && block.col >= 0 && block.col < COLS) {
+                    grid[block.row][block.col] = block.color;
+                    
+                    // 착지 애니메이션 추가
+                    const { x, y } = hexToPixel(block.col, block.row);
+                    landingBlocks.push({
+                        x, y, color: COLORS[block.color], frame: 0, maxFrame: 10
+                    });
+                    
+                    placed = true;
+                }
+            });
+            
+            console.log('Piece placed:', placed);
+            console.log('Grid state:', grid.map(row => row.map(cell => cell === -1 ? '.' : cell).join('')).join('\n'));
+            
+            // 게임 오버 체크 (맨 위줄에 블록이 있으면)
+            for (let col = 0; col < COLS; col++) {
+                if (grid[0][col] !== -1) {
+                    console.log('Game over - top row filled');
+                    endGame();
+                    return;
+                }
+            }
+            
+            // 착지 애니메이션 대기 후 처리
+            setTimeout(() => {
+                // 중력 적용
+                applyGravity();
+                
+                // 매칭 체크 (애니메이션 효과 포함)
+                setTimeout(() => {
+                    checkMatchesWithEffect();
+                }, 200);
+            }, 150);
+            
+            // 새 피스 생성
+            currentPiece = createPiece();
+        }
+
+        // 중력 적용 (빈 공간을 아래로 떨어뜨림)
+        function applyGravity() {
+            let moved = true;
+            while (moved) {
+                moved = false;
+                for (let row = ROWS - 2; row >= 0; row--) {
+                    for (let col = 0; col < COLS; col++) {
+                        if (grid[row][col] !== -1 && grid[row + 1][col] === -1) {
+                            grid[row + 1][col] = grid[row][col];
+                            grid[row][col] = -1;
+                            moved = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 인접한 같은 색 블록 찾기 (BFS)
+        function findConnected(startRow, startCol, color, visited) {
+            const connected = [];
+            const queue = [[startRow, startCol]];
+            visited[startRow][startCol] = true;
+            
+            const directions = [
+                [0, -1], [0, 1],  // 좌우
+                [-1, 0], [1, 0],  // 상하
+                [-1, -1], [-1, 1], [1, -1], [1, 1]  // 대각선
+            ];
+            
+            while (queue.length > 0) {
+                const [row, col] = queue.shift();
+                connected.push([row, col]);
+                
+                for (let [dr, dc] of directions) {
+                    const newRow = row + dr;
+                    const newCol = col + dc;
+                    
+                    if (newRow >= 0 && newRow < ROWS && newCol >= 0 && newCol < COLS &&
+                        !visited[newRow][newCol] && grid[newRow][newCol] === color) {
+                        visited[newRow][newCol] = true;
+                        queue.push([newRow, newCol]);
+                    }
+                }
+            }
+            
+            return connected;
+        }
+
+        // 매칭 체크 (애니메이션 효과 포함)
+        function checkMatchesWithEffect() {
+            const visited = Array(ROWS).fill().map(() => Array(COLS).fill(false));
+            const toRemove = [];
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (grid[row][col] !== -1 && grid[row][col] !== -2 && !visited[row][col]) {
+                        const connected = findConnected(row, col, grid[row][col], visited);
+                        
+                        if (connected.length >= 6) {
+                            toRemove.push({
+                                blocks: connected,
+                                color: grid[row][col]
+                            });
+                        }
+                    }
+                }
+            }
+            
+            if (toRemove.length > 0) {
+                // 1단계: 깜빡임 효과
+                let blinkCount = 0;
+                const blinkInterval = setInterval(() => {
+                    toRemove.forEach(group => {
+                        group.blocks.forEach(([r, c]) => {
+                            if (blinkCount % 2 === 0) {
+                                grid[r][c] = -2; // 임시 마커 (깜빡임)
+                            } else {
+                                grid[r][c] = group.color;
+                            }
+                        });
+                    });
+                    
+                    blinkCount++;
+                    
+                    if (blinkCount >= 6) {
+                        clearInterval(blinkInterval);
+                        
+                        // 2단계: 폭발 효과
+                        let totalCleared = 0;
+                        toRemove.forEach(group => {
+                            group.blocks.forEach(([r, c]) => {
+                                const { x, y } = hexToPixel(c, r);
+                                explosions.push({
+                                    x, y, 
+                                    color: COLORS[group.color], 
+                                    frame: 0, 
+                                    maxFrame: EXPLOSION_FRAMES
+                                });
+                                
+                                grid[r][c] = -1;
+                                totalCleared++;
+                            });
+                        });
+                        
+                        score += totalCleared * 10;
+                        updateScore();
+                        
+                        // 3단계: 중력 적용 후 미션 체크
+                        setTimeout(() => {
+                            applyGravity();
+                            setTimeout(() => {
+                                checkMission();
+                            }, 200);
+                        }, 300);
+                    }
+                }, 100);
+            } else {
+                // 매칭이 없으면 바로 미션 체크
+                setTimeout(() => {
+                    checkMission();
+                }, 100);
+            }
+        }
+
+        // 매칭 체크
+        function checkMatches() {
+            const visited = Array(ROWS).fill().map(() => Array(COLS).fill(false));
+            let totalCleared = 0;
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (grid[row][col] !== -1 && !visited[row][col]) {
+                        const connected = findConnected(row, col, grid[row][col], visited);
+                        
+                        if (connected.length >= 6) {
+                            // 6개 이상 연결되면 제거
+                            const color = grid[row][col];
+                            connected.forEach(([r, c]) => {
+                                // 폭발 이펙트 추가
+                                const { x, y } = hexToPixel(c, r);
+                                explosions.push({
+                                    x, y, color, frame: 0, maxFrame: EXPLOSION_FRAMES
+                                });
+                                
+                                grid[r][c] = -1;
+                            });
+                            
+                            totalCleared += connected.length;
+                        }
+                    }
+                }
+            }
+            
+            if (totalCleared > 0) {
+                score += totalCleared * 10;
+                updateScore();
+                applyGravity();
+            }
+        }
+
+        // 미션 체크
+        function checkMission() {
+            // 원본 패턴만 사용 (회전/반전 없이)
+            const pattern = normalizePattern(missionShape);
+            
+            console.log('Checking mission pattern:', pattern, 'color:', missionColor);
+            
+            // 그리드에서 미션 모양 찾기 (아래에서 위로)
+            for (let row = ROWS - 1; row >= 0; row--) {
+                for (let col = 0; col < COLS; col++) {
+                    const matchedBlocks = checkExactPatternAt(row, col, pattern);
+                    if (matchedBlocks) {
+                        // 미션 성공! 해당 색깔의 모든 블록 찾기
+                        console.log('Mission Complete! Pattern found at:', row, col);
+                        clearAllColorBlocks(missionColor);
+                        score += 500; // 보너스 점수
+                        updateScore();
+                        generateMission(); // 새 미션
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 패턴 정규화 (최소 좌표를 0,0으로)
+        function normalizePattern(pattern) {
+            const minCol = Math.min(...pattern.map(([col, row]) => col));
+            const minRow = Math.min(...pattern.map(([col, row]) => row));
+            
+            return pattern.map(([col, row]) => [col - minCol, row - minRow]);
+        }
+
+        // 특정 위치에서 정확한 패턴 체크 (원본만)
+        function checkExactPatternAt(startRow, startCol, pattern) {
+            const matchedBlocks = [];
+            
+            for (let [col, row] of pattern) {
+                const checkRow = startRow + row;
+                const checkCol = startCol + col;
+                
+                // 경계 체크
+                if (checkRow >= ROWS || checkCol >= COLS || checkRow < 0 || checkCol < 0) {
+                    return null;
+                }
+                
+                // 색깔 체크
+                if (grid[checkRow][checkCol] !== missionColor) {
+                    return null;
+                }
+                
+                matchedBlocks.push([checkRow, checkCol]);
+            }
+            
+            return matchedBlocks;
+        }
+
+        // 특정 색깔의 모든 블록 제거 (애니메이션 효과 포함)
+        function clearAllColorBlocks(color) {
+            const toRemove = [];
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (grid[row][col] === color) {
+                        toRemove.push([row, col]);
+                    }
+                }
+            }
+            
+            if (toRemove.length === 0) return;
+            
+            console.log('Clearing all blocks of color:', color, 'count:', toRemove.length);
+            
+            // 깜빡임 효과
+            let blinkCount = 0;
+            const blinkInterval = setInterval(() => {
+                toRemove.forEach(([r, c]) => {
+                    if (blinkCount % 2 === 0) {
+                        grid[r][c] = -2; // 깜빡임
+                    } else {
+                        grid[r][c] = color;
+                    }
+                });
+                
+                blinkCount++;
+                
+                if (blinkCount >= 8) {
+                    clearInterval(blinkInterval);
+                    
+                    // 폭발 효과 (순차적으로)
+                    toRemove.forEach(([r, c], index) => {
+                        setTimeout(() => {
+                            const { x, y } = hexToPixel(c, r);
+                            explosions.push({
+                                x, y, color: COLORS[color], frame: 0
+                            });
+                            grid[r][c] = -1;
+                            
+                            // 마지막 블록이 터진 후 중력 적용
+                            if (index === toRemove.length - 1) {
+                                setTimeout(() => {
+                                    applyGravity();
+                                }, 100);
+                            }
+                        }, index * 30);
+                    });
+                }
+            }, 100);
+        }
+
+        // 점수 업데이트
+        function updateScore() {
+            document.getElementById('scoreDisplay').textContent = score;
+            
+            if (score >= targetScore) {
+                levelComplete();
+            }
+        }
+
+        // 레벨 클리어
+        function levelComplete() {
+            gameOver = true;
+            document.getElementById('levelScore').textContent = score;
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('levelCompleteScreen').classList.add('show');
+        }
+
+        // 다음 레벨
+        function nextLevel() {
+            level++;
+            targetScore = Math.floor(targetScore * 1.5);
+            dropSpeed = Math.max(200, dropSpeed - 50);
+            
+            document.getElementById('levelDisplay').textContent = level;
+            document.getElementById('targetDisplay').textContent = targetScore;
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('levelCompleteScreen').classList.remove('show');
+            
+            initGrid();
+            generateMission();
+            currentPiece = createPiece();
+            gameOver = false;
+        }
+
+        // 게임 오버
+        function endGame() {
+            gameOver = true;
+            document.getElementById('finalScore').textContent = score;
+            
+            // 랭킹 진입 가능 확인
+            if (canEnterRanking(score)) {
+                document.getElementById('nameInputSection').style.display = 'block';
+                document.getElementById('playerNameInput').value = '';
+                document.getElementById('playerNameInput').focus();
+            } else {
+                document.getElementById('nameInputSection').style.display = 'none';
+            }
+            
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('gameOverScreen').classList.add('show');
+        }
+
+        // 게임 재시작
+        function restartGame() {
+            score = 0;
+            level = 1;
+            targetScore = 1000;
+            dropSpeed = 500;
+            
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('levelDisplay').textContent = level;
+            document.getElementById('targetDisplay').textContent = targetScore;
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('gameOverScreen').classList.remove('show');
+            document.getElementById('levelCompleteScreen').classList.remove('show');
+            
+            initGrid();
+            generateMission();
+            currentPiece = createPiece();
+            gameOver = false;
+            
+            gameLoop();
+        }
+
+        // 그리드 그리기
+        function drawGrid() {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const { x, y } = hexToPixel(col, row);
+                    
+                    if (grid[row][col] !== -1 && grid[row][col] !== -2) {
+                        drawCat(ctx, x, y, CELL_SIZE * 0.8, COLORS[grid[row][col]]);
+                    }
+                    // -2는 깜빡임 효과로 그리지 않음
+                }
+            }
+        }
+
+        // 현재 피스 그리기
+        function drawCurrentPiece() {
+            if (!currentPiece) return;
+            
+            currentPiece.blocks.forEach((block, index) => {
+                // 화면 안에 있는 블록만 그리기
+                if (block.row >= 0) {
+                    const { x, y } = hexToPixel(block.col, block.row);
+                    drawCat(ctx, x, y, CELL_SIZE * 0.8, COLORS[block.color]);
+                }
+            });
+        }
+
+        // 착지 애니메이션 그리기
+        function drawLandingBlocks() {
+            if (!spritesLoaded) return;
+            
+            landingBlocks = landingBlocks.filter(block => {
+                if (block.frame >= block.maxFrame) return false;
+                
+                const progress = block.frame / block.maxFrame;
+                const squishScale = 1 - Math.sin(progress * Math.PI) * 0.3;
+                
+                const colorIndex = COLORS.indexOf(block.color);
+                const catFrame = 0; // 기본 프레임
+                const sx = catFrame * SPRITE_SIZE;
+                const sy = colorIndex * SPRITE_SIZE;
+                
+                const size = CELL_SIZE * 0.8;
+                
+                ctx.save();
+                ctx.translate(block.x, block.y);
+                ctx.scale(1, squishScale);
+                
+                ctx.drawImage(
+                    catSpriteSheet,
+                    sx, sy, SPRITE_SIZE, SPRITE_SIZE,
+                    -size / 2, -size / 2, size, size
+                );
+                
+                ctx.restore();
+                
+                block.frame++;
+                return true;
+            });
+        }
+
+        // 폭발 이펙트 그리기
+        function drawExplosions() {
+            if (!spritesLoaded) return;
+            
+            explosions = explosions.filter(explosion => {
+                const frame = Math.floor(explosion.frame);
+                if (frame >= explosion.maxFrame) return false;
+                
+                const colorIndex = COLORS.indexOf(explosion.color);
+                const sx = frame * SPRITE_SIZE;
+                const sy = colorIndex * SPRITE_SIZE;
+                
+                const size = CELL_SIZE * 1.5;
+                ctx.drawImage(
+                    explosionSpriteSheet,
+                    sx, sy, SPRITE_SIZE, SPRITE_SIZE,
+                    explosion.x - size / 2, explosion.y - size / 2, size, size
+                );
+                
+                explosion.frame += 0.3;
+                return true;
+            });
+        }
+
+        // 게임 렌더링
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            drawLandingBlocks();
+            drawExplosions();
+            drawCurrentPiece();
+            
+            animationFrame++;
+        }
+
+        // 게임 루프
+        function gameLoop(timestamp = 0) {
+            if (gameOver) return;
+            
+            const elapsed = timestamp - lastDropTime;
+            const currentDropSpeed = fastDrop ? 50 : dropSpeed;
+            
+            if (elapsed > currentDropSpeed) {
+                dropPiece();
+                lastDropTime = timestamp;
+            }
+            
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 키보드 입력
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    movePiece(-1);
+                    break;
+                case 'ArrowRight':
+                    movePiece(1);
+                    break;
+                case 'ArrowUp':
+                case ' ':
+                    rotatePiece();
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    fastDrop = true;
+                    break;
+            }
+            
+            render();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowDown') {
+                fastDrop = false;
+            }
+        });
+
+        // 게임 초기화 및 시작
+        generateSpriteSheets();
+        initGrid();
+        generateMission();
+        currentPiece = createPiece();
+        updateScore();
+        loadRankings(); // 랭킹 로드
+        
+        // 스프라이트 로딩 대기 후 시작
+        setTimeout(() => {
+            gameLoop();
+        }, 100);
+        
+        // 엔터키로 이름 등록
+        document.getElementById('playerNameInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveRanking();
+            }
+        });
+    </script>
+</body>
+</html>
