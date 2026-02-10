@@ -524,6 +524,43 @@
             margin-bottom: 5px;
             text-shadow: 0 0 10px rgba(183, 148, 246, 0.4);
         }
+        .mobile-controls {
+            position: fixed;
+            left: 50%;
+            bottom: calc(12px + env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: none; /* 기본 숨김 (모바일에서만 보이게) */
+            pointer-events: auto;
+        }
+        .mobile-controls .control-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .mobile-controls button {
+            width: 64px;
+            height: 64px;
+            font-size: 24px;
+            font-family: 'Fredoka', sans-serif;
+            background: rgba(157, 127, 234, 0.92);
+            color: white;
+            border: 3px solid #B794F6;
+            border-radius: 0;
+            box-shadow: 0 4px 0 #7C5AC2, 0 8px 16px rgba(0,0,0,0.35);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.25);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .mobile-controls button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #7C5AC2, 0 4px 10px rgba(0,0,0,0.35);
+        }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
     </style>
 </head>
 <body>
@@ -1754,6 +1791,133 @@
                 saveRanking();
             }
         });
-    </script>
+
+        
+        // ✅ 모바일 터치 컨트롤 (정리본)
+        function isTouchDevice() {
+            return (
+            'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+            );
+        }
+        
+        function bindMobileControls() {
+            const controls = document.getElementById('mobileControls');
+            if (!controls) return;
+        
+            if (isTouchDevice()) {
+            controls.style.display = 'block';
+            }
+        
+            const left = document.getElementById('btnLeft');
+            const right = document.getElementById('btnRight');
+            const rotate = document.getElementById('btnRotate');
+            const down = document.getElementById('btnDown');
+        
+            if (!left || !right || !rotate || !down) return;
+        
+            // 버튼 터치 시 스크롤/드래그 방지
+            const prevent = (e) => e.preventDefault();
+        
+            // 회전: 탭 1회
+            rotate.addEventListener(
+            'touchstart',
+            (e) => {
+                prevent(e);
+                if (gameOver) return;
+                rotatePiece();
+                render();
+            },
+            { passive: false }
+            );
+        
+            // 좌/우: 길게 누르면 연속 이동 (짧게 눌러도 1회 이동됨)
+            let leftInterval = null;
+            let rightInterval = null;
+        
+            left.addEventListener(
+            'touchstart',
+            (e) => {
+                prevent(e);
+                if (gameOver) return;
+        
+                movePiece(-1);
+                render();
+        
+                leftInterval = setInterval(() => {
+                if (!gameOver) {
+                    movePiece(-1);
+                    render();
+                }
+                }, 80);
+            },
+            { passive: false }
+            );
+            left.addEventListener('touchend', () => {
+            clearInterval(leftInterval);
+            leftInterval = null;
+            });
+        
+            right.addEventListener(
+            'touchstart',
+            (e) => {
+                prevent(e);
+                if (gameOver) return;
+        
+                movePiece(1);
+                render();
+        
+                rightInterval = setInterval(() => {
+                if (!gameOver) {
+                    movePiece(1);
+                    render();
+                }
+                }, 80);
+            },
+            { passive: false }
+            );
+            right.addEventListener('touchend', () => {
+            clearInterval(rightInterval);
+            rightInterval = null;
+            });
+        
+            // 아래: 누르는 동안 빠른 낙하
+            down.addEventListener(
+            'touchstart',
+            (e) => {
+                prevent(e);
+                if (gameOver) return;
+                fastDrop = true;
+            },
+            { passive: false }
+            );
+            down.addEventListener('touchend', () => {
+            fastDrop = false;
+            });
+        
+            // iOS에서 터치 중 스크롤/클릭 튀는 것 방지
+            [left, right, rotate, down].forEach((btn) => {
+            btn.addEventListener('touchmove', prevent, { passive: false });
+            btn.addEventListener('contextmenu', (e) => e.preventDefault());
+            });
+        }
+        
+        // ✅ 중요: DOM 생성 후 바인딩
+        document.addEventListener('DOMContentLoaded', () => {
+            bindMobileControls();
+        });
+    </script>      
+    <!-- ✅ 모바일 터치패드 -->
+<div class="mobile-controls" id="mobileControls">
+    <div class="control-row">
+        <button id="btnLeft" aria-label="왼쪽">←</button>
+        <button id="btnRotate" aria-label="회전">⟳</button>
+        <button id="btnRight" aria-label="오른쪽">→</button>
+    </div>
+    <div class="control-row">
+        <button id="btnDown" aria-label="빠른 낙하">▼</button>
+    </div>
+</div>
 </body>
 </html>
